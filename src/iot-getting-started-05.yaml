@@ -1,0 +1,109 @@
+esphome:
+  name: iot-getting-started
+  friendly_name: iot-getting-started
+
+esp8266:
+  board: d1_mini
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+#api:
+#  encryption:
+#    key: "HT3DVxFSsqTCYD8r8KEQUexW1uZKAI0KXeBITovvR9M="
+
+ota:
+  password: "204fd9489934ff4d24909949bdb3bdb6"
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+    - ssid: !secret wifi_ssid_2
+      password: !secret wifi_password_2
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Iot-Getting-Started"
+    password: "C0VoOIqD2eWk"
+
+captive_portal:
+    
+web_server:
+
+mqtt:
+  broker: !secret mqtt_host
+  port: 1883
+  username: !secret mqtt_user
+  password: !secret mqtt_password
+  on_message:
+    - topic: led/d1mini
+      payload: "on"
+      then: 
+        - light.turn_on: red_led
+    - topic: led/d1mini
+      payload: "off"
+      then: 
+        - light.turn_off: red_led
+        
+
+# LED output
+light:
+  - platform: monochromatic
+    id: red_led
+    name: "Red LED"
+    output: gpio_d2
+    effects:
+      - pulse:
+
+output:
+  - platform: esp8266_pwm
+    id: gpio_d2
+    pin: D2
+
+# Button input
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Little Button"
+    on_press:
+      then:
+      - light.toggle: red_led
+
+# Temp & Humidity Sensor
+sensor:
+  - platform: dht
+    pin: D6
+    temperature:
+      name: "Temperature 1"
+      id: temp_1
+    humidity:
+      name: "Humidity 1"
+      id: humi_1
+
+# MQTT      
+mqtt:
+  broker: !secret mqtt_host
+  port: 1883
+  username: !secret mqtt_user
+  password: !secret mqtt_password
+
+interval:
+  - interval: 1min
+    then:
+      - mqtt.publish_json:
+          topic: "environment/d1_mini"
+          payload: |-
+            root["temp"]=id(temp).state;
+            root["humi"]=id(humi).state;
+      - logger.log: 
+          format: "Sending sensor values - temp: %.1f - humi: %.1f"
+          args: [id(temp).state, id(humi).state]
+
