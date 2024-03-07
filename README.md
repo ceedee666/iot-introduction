@@ -19,4 +19,4 @@ to be used in the lecture _Industrielle Produktion und Industrie 4.0_ at the
 
 ## Useful resources
 
-- ESPHome documentation: [https://esphome.io/]
+- ESPHome documentation: [https://esphome.io/](https://esphome.io/)
